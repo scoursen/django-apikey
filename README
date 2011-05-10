@@ -1,0 +1,26 @@
+django-apikey
+
+Simple, straight forward API key authentication for django-piston.
+
+Requirements:
+django-piston
+a User profile that has the following 2 methods:
+   can_make_api_key( ), returns True is the current user can create another API key.
+   available_keys( ), the number of keys that current user can create.
+
+There is a simple template file in templates/keys.html.  This file is used
+by all the project's views.
+
+
+To use django-apikey with django-piston:
+
+from key.auth import ApiKeyAuthentication
+auth = ApiKeyAuthentication( )
+bucket_handler = Resource( handler=MyHandler, authentication=auth )
+
+
+Clients use the Authorization header to pass the API key:
+
+headers['Authorization'] = 'your.api.key.here'
+
+
