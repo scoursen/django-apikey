@@ -1,0 +1,26 @@
+{%extends "base_template.html" %}
+
+{%block content%}
+{%if keys%}
+<h3>Active Keys for {{user.username}}</h2>
+<ul>
+  {%for key in keys%}
+  <li>{{key.key}}</li>
+  {%endfor%}
+</ul>
+{%else%}
+<h3>No active keys for {{user.username}}</h3>
+{%endif%}
+{%if can_make_api_key %}
+{%if available_keys == 'Unlimited' %}
+<p>You can create an unlmited number of keys.
+{%else%}
+<p>You can create {{available_keys}} more keys.
+{%endif%}
+<form method="POST" action="{%url api_create_key%}">
+  <input type="submit" value="Generate API key"/>
+</form>
+
+{%endif%}
+
+{%endblock%}
