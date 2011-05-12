@@ -40,14 +40,16 @@ def latest_access( request, *args, **kwargs ):
 def generate_key( request ):
     if request.method == 'POST':
         key = generate_unique_api_key( request.user )
-    else:
-        return list_keys( request )
+    return do_generate_key_list( request )
 
 
 @login_required
 @condition( etag_func=etag_func, last_modified_func=latest_access )
 @cache_page( 1 )
 def list_keys( request ):
+    return do_generate_key_list( request )
+
+def do_generate_key_list( request ):
     keys = ApiKey.objects.filter( user=request.user )
     user = request.user
     cmak = user.get_profile( ).can_make_api_key( )
