@@ -40,27 +40,23 @@ def latest_access( request, *args, **kwargs ):
 def generate_key( request ):
     if request.method == 'POST':
         key = generate_unique_api_key( request.user )
-    keys = ApiKey.objects.filter( user=request.user )
-    return render_to_response( 'key/key.html',
-                               { 'keys': keys, 'user': request.user },
-                               context_instance=RequestContext(request) )
+    else:
+        return list_keys( request )
 
 
 @login_required
 @condition( etag_func=etag_func, last_modified_func=latest_access )
 @cache_page( 1 )
 def list_keys( request ):
-    if request.method == 'POST':
-        pass
     keys = ApiKey.objects.filter( user=request.user )
     user = request.user
-    cmak = user.get_profile( ).can_make_api_key
-    ak = user.get_profile( ).available_keys
+    cmak = user.get_profile( ).can_make_api_key( )
+    ak = user.get_profile( ).available_keys( )
     return render_to_response( 'key/key.html',
                                { 'keys': keys, 'user': user,
                                  'can_make_api_key': cmak,
                                  'available_keys': ak },
-                               context_instance=Requestcontext(request) )
+                               context_instance=RequestContext(request) )
 
 @login_required
 @condition( etag_func=etag_func, last_modified_func=latest_access )
