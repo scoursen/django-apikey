@@ -26,13 +26,4 @@ def generate_unique_api_key(user):
     k.save()
     return k
 
-if User.objects.filter(username='nqdq_system'):
-    if not User.objects.get(username='nqdq_system').keys.all():
-        u = User.objects.get(username='nqdq_system')
-        logging.info('Generating API key for nqdq_system')
-        k = generate_unique_api_key(u)
-        u.save()
-    else:
-        logging.info('Not generating API key')
-
 admin.site.register(ApiKey)
