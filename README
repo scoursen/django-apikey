@@ -19,8 +19,13 @@ auth = ApiKeyAuthentication( )
 bucket_handler = Resource( handler=MyHandler, authentication=auth )
 
 
-Clients use the Authorization header to pass the API key:
+By default, clients use the Authorization header to pass the API key:
 
 headers['Authorization'] = 'your.api.key.here'
 
+This can be modified in the settings.py of your Django project by using the APIKEY_AUTHORIZATION_HEADER setting, e.g.:
+
+APIKEY_AUTHORIZATION_HEADER = 'X-Api-Authorization'
+
+This setting defaults to the Authorization header.
 

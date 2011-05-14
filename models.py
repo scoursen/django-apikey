@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.contrib import admin
 from django.conf import settings
 from datetime import datetime
-import logging
 
 try:
     key_size = settings.API_KEY_SIZE
