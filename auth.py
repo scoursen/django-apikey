@@ -2,6 +2,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.models import *
 from key.models import ApiKey
+import logging
 
 class ApiKeyAuthentication( object ):
     def is_authenticated( self, request ):

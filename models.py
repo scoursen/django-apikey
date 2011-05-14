@@ -14,6 +14,14 @@ class ApiKey(models.Model):
     key = models.CharField(max_length=key_size, unique=True)
     logged_ip = models.IPAddressField(null=True)
     last_used = models.DateTimeField(default=datetime.utcnow)
+    def login(self, ip_address):
+        self.logged_ip = ip_address
+        self.save()
+
+    def logout(self):
+        self.logged_ip = None
+        self.save()
+            
     def __unicode__(self):
         return self.key
 
