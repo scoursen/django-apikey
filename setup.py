@@ -6,5 +6,5 @@ setup(name='django-apikey',
       author='Steve Coursen',
       author_email='me@stevecourse.com',
       maintainer='Jorge Cardona',
-      mantainer_email='jorgeecardona@gmail.com',
+      maintainer_email='jorgeecardona@gmail.com',
       packages=find_packages())
