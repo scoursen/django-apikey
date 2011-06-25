@@ -33,7 +33,7 @@ class ApiKeyProfile(models.Model):
 
 class ApiKey(models.Model):
     user = models.ForeignKey(User, related_name='keys')
-    key = models.CharField(max_length=key_size, unique=True)
+    key = models.CharField(max_length=KEY_SIZE, unique=True)
     logged_ip = models.IPAddressField(null=True)
     last_used = models.DateTimeField(default=datetime.utcnow)
     def login(self, ip_address):
