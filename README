@@ -4,9 +4,7 @@ Simple, straight forward API key authentication for django-piston.
 
 Requirements:
 django-piston
-a User profile that has the following 2 methods:
-   can_make_api_key( ), returns True is the current user can create another API key.
-   available_keys( ), the number of keys that current user can create.
+Using django.contrib.auth
 
 There is a simple template file in templates/keys.html.  This file is used
 by all the project's views.
@@ -28,4 +26,13 @@ This can be modified in the settings.py of your Django project by using the APIK
 APIKEY_AUTHORIZATION_HEADER = 'X-Api-Authorization'
 
 This setting defaults to the Authorization header.
+
+The numer of keys that a User can be defined in your project's settings.py.  Setting API_MAX_KEYS to a positive integer
+will create a limit on the number of keys an individual User can create.  Setting it to -1 allows Users to create an
+unlimited number of keys.
+
+API_MAX_KEYS = -1
+API_KEY_SIZE = 16
+
+For example, this will allow a User to make an unlimited number of keys of a length of 16 characters.
 
