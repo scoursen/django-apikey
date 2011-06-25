@@ -18,6 +18,7 @@
 <p>You can create {{available_keys}} more keys.
 {%endif%}
 <form method="POST" action="{%url api_create_key%}">
+  {% csrf_token %}
   <input type="submit" value="Generate API key"/>
 </form>
 

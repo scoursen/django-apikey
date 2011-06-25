@@ -8,64 +8,65 @@ from django.core.cache import cache
 from key.models import ApiKey, generate_unique_api_key
 from django.contrib.auth.models import User
 import datetime
+import logging
 
 
-
-def get_etag_key( request ):
+def get_etag_key(request):
     try:
-        lm = request.user.get_profile( ).last_accessed
+        lm = request.user.get_profile().last_accessed
     except:
         try:
-            lm = request.get_profile( ).last_accessed
+            lm = request.get_profile().last_accessed
         except:
-            lm = datetime.datetime.utcnow( )
-    return 'etag.%s' % ( lm )
+            lm = datetime.datetime.utcnow()
+    k = 'etag.%s' % (lm)
+    return k.replace(' ', '_')
 
-def etag_func( request, *args, **kwargs ):
-    etag_key = get_etag_key( request )
-    etag = cache.get( etag_key, None )
+def etag_func(request, *args, **kwargs):
+    etag_key = get_etag_key(request)
+    etag = cache.get(etag_key, None)
     return etag
 
-def latest_access( request, *args, **kwargs ):
+def latest_access(request, *args, **kwargs):
     try:
-        return request.user.get_profile( ).last_accessed
+        return request.user.get_profile().last_accessed
     except:
-        return datetime.datetime.utcnow( )
+        return datetime.datetime.utcnow()
 
 
 
 @login_required
-@condition( etag_func=etag_func, last_modified_func=latest_access )
-@cache_page( 1 )
-def generate_key( request ):
+@condition(etag_func=etag_func, last_modified_func=latest_access)
+@cache_page(1)
+def generate_key(request):
     if request.method == 'POST':
-        key = generate_unique_api_key( request.user )
-    return do_generate_key_list( request )
+        key = generate_unique_api_key(request.user)
+    return do_generate_key_list(request)
 
 
 @login_required
-@condition( etag_func=etag_func, last_modified_func=latest_access )
-@cache_page( 1 )
-def list_keys( request ):
-    return do_generate_key_list( request )
+@condition(etag_func=etag_func, last_modified_func=latest_access)
+@cache_page(1)
+def list_keys(request):
+    return do_generate_key_list(request)
 
-def do_generate_key_list( request ):
-    keys = ApiKey.objects.filter( user=request.user )
+def do_generate_key_list(request):
+    keys = ApiKey.objects.filter(user=request.user)
     user = request.user
-    cmak = user.get_profile( ).can_make_api_key( )
-    ak = user.get_profile( ).available_keys( )
-    return render_to_response( 'key/key.html',
-                               { 'keys': keys, 'user': user,
-                                 'can_make_api_key': cmak,
-                                 'available_keys': ak },
-                               context_instance=RequestContext(request) )
+    cmak = user.key_profile.can_make_api_key()
+    ak = user.key_profile.available_keys()
+    return render_to_response('key/key.html',
+                              { 'keys': keys, 'user': user,
+                                'can_make_api_key': cmak,
+                                'available_keys': ak },
+                              context_instance=RequestContext(request))
 
 @login_required
-@condition( etag_func=etag_func, last_modified_func=latest_access )
-@cache_page( 1 )
-def delete_key( request ):
-    keys = ApiKey.objects.filter( user=request.user )
-    return render_to_response( 'key/key.html',
-                               { 'keys': keys,
-                                 'user': request.user },
-                               context_instance=RequestContext(request) )
+@condition(etag_func=etag_func, last_modified_func=latest_access)
+@cache_page(1)
+def delete_key(request):
+    keys = ApiKey.objects.filter(user=request.user)
+    return render_to_response('key/key.html',
+                              { 'keys': keys,
+                                'user': request.user },
+                              context_instance=RequestContext(request))
