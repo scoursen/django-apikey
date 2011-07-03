@@ -1,1 +1,1 @@
-import test_key
+from test_key import *

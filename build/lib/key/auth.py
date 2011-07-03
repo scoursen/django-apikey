@@ -7,7 +7,7 @@ import logging
 class ApiKeyAuthentication( object ):
     def is_authenticated( self, request ):
         auth_header = getattr( settings, 'APIKEY_AUTHORIZATION_HEADER',
-                               'Authorization' )
+                               'X-Api-Authorization' )
         auth_header = 'HTTP_%s' % ( auth_header.upper( ).replace( '-', '_' ) )
         auth_string = request.META.get( auth_header )
         if not auth_string:
@@ -16,7 +16,7 @@ class ApiKeyAuthentication( object ):
             key = ApiKey.objects.get(key=auth_string)
             request.user = key.user
             user_logged_in.send(sender=key.user.__class__,
-                                request=request, user=user)
+                                request=request, user=key.user)
             return True
         except:
             request.user = AnonymousUser( )

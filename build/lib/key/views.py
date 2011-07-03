@@ -64,9 +64,8 @@ def do_generate_key_list(request):
 @login_required
 @condition(etag_func=etag_func, last_modified_func=latest_access)
 @cache_page(1)
-def delete_key(request):
-    keys = ApiKey.objects.filter(user=request.user)
-    return render_to_response('key/key.html',
-                              { 'keys': keys,
-                                'user': request.user },
-                              context_instance=RequestContext(request))
+def delete_key(request, key):
+    key = get_object_or_404(ApiKey, key=key)
+    key.delete()
+    return do_generate_key_list(request)
+

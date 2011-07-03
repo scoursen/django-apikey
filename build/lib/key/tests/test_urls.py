@@ -2,7 +2,6 @@ from django.conf.urls.defaults import *
 from django.views.decorators.cache import cache_page
 from piston.resource import Resource
 from piston.handler import BaseHandler, AnonymousBaseHandler
-from api.handlers import *
 from key.auth import *
 import key.urls
 
@@ -22,12 +21,12 @@ class KeyHandler(BaseHandler):
 
 
 auth = ApiKeyAuthentication()
-key_handler = Resource(handler=QueueHandler,
+key_handler = Resource(handler=KeyHandler,
                        authentication=auth)
 
 
 test_patterns = patterns('',                       
-                         url(r'^k/$', q_creator, name="test_key_list" ),
+                         url(r'^k/$', key_handler, name="test_key_list" ),
                          )
 
 key.urls.urlpatterns = key.urls.urlpatterns + test_patterns

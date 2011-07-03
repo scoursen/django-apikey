@@ -10,6 +10,7 @@ class ApiKeyTest(TestCase):
     def setUp(self):
         self.user = User.objects.create(username='ApiKeyTest',
                                         email='ApiKeyTest@t.com')
+        self.user.set_password('ApiKeyTestPassword')
         self.user.save()
         generate_unique_api_key(self.user)
 
@@ -18,8 +19,9 @@ class ApiKeyTest(TestCase):
         my_kstr = hashlib.md5('%s-%s' % (self.user.email,
                                          k.created)).hexdigest()
         self.assertEquals(my_kstr, k.key)
-        self.assertEquals(ApiKey.objects.filter(user=self.user).count(),
-                          2)
+        self.assertEquals(self.user.api_keys.count(), 2)
+        k.delete()
+        self.assertEquals(self.user.api_keys.count(), 1)        
 
     def test_authentication(self):
         client = Client()
@@ -32,4 +34,28 @@ class ApiKeyTest(TestCase):
         rv = client.get(reverse('test_key_list'))
         self.assertEquals(rv.status_code, 401)
 
+    def test_views(self):
+        client = Client()
+        rv = client.get(reverse('api_key_list'))
+        self.assertEquals(rv.status_code, 302)
+        rv = client.get(reverse('api_key_create'))
+        self.assertEquals(rv.status_code, 302)
+        rv = client.get(reverse('api_key_delete',args=('ValueDoesntMatter',)))
+        self.assertEquals(rv.status_code, 302)
+        client = Client()
+        client.login(username='ApiKeyTest',
+                     password='ApiKeyTestPassword')
+        rv = client.get(reverse('api_key_list'))
+        self.assertEquals(rv.status_code, 200)
+        original_list = list(self.user.api_keys.all())
+        self.assertEquals(self.user.api_keys.count(), 1)
+        rv = client.post(reverse('api_key_create'))
+        self.assertEquals(rv.status_code, 200)
+        self.assertEquals(self.user.api_keys.count(), 2)
+        k = self.user.api_keys.all()[0]
+        self.assertTrue(k not in original_list)
+        rv = client.post(reverse('api_key_delete',args=(k.key,)))
+        self.assertTrue(k not in self.user.api_keys.all())
+        self.assertEquals(rv.status_code, 200)
+        self.assertEquals(self.user.api_keys.count(), 1)
 
