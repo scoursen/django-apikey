@@ -17,22 +17,21 @@ auth = ApiKeyAuthentication( )
 bucket_handler = Resource( handler=MyHandler, authentication=auth )
 
 
-By default, clients use the Authorization header to pass the API key:
+By default, clients use the X-Api-Authorization header to pass the API key:
 
-headers['Authorization'] = 'your.api.key.here'
+headers['X-Api-Authorization'] = 'your.api.key.here'
 
 This can be modified in the settings.py of your Django project by using the APIKEY_AUTHORIZATION_HEADER setting, e.g.:
 
-APIKEY_AUTHORIZATION_HEADER = 'X-Api-Authorization'
+APIKEY_AUTHORIZATION_HEADER = 'X-MyCoolApp-Authorization'
 
-This setting defaults to the Authorization header.
+This setting defaults to the X-Api-Authorization header.
 
 The numer of keys that a User can be defined in your project's settings.py.  Setting API_MAX_KEYS to a positive integer
 will create a limit on the number of keys an individual User can create.  Setting it to -1 allows Users to create an
 unlimited number of keys.
 
 API_MAX_KEYS = -1
-API_KEY_SIZE = 16
 
-For example, this will allow a User to make an unlimited number of keys of a length of 16 characters.
+For example, this will allow a User to make an unlimited number of keys.
 
