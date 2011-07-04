@@ -5,6 +5,8 @@ setup(name='django-apikey',
       description='Simple, straight forward API key for django-piston.',
       author='Steve Coursen',
       author_email='me@stevecoursen.com',
-      maintainer='Jorge Cardona',
-      maintainer_email='jorgeecardona@gmail.com',
-      packages=find_packages())
+      packages=find_packages(),
+      install_requires=['setuptools',],
+      include_package_data=True,
+      setup_requires=['setuptools_git',],
+)
