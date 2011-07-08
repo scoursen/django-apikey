@@ -71,7 +71,6 @@ def create_profile(sender, instance, created, *args, **kwargs):
             profile.save()
 
 post_save.connect(create_profile, sender=User, dispatch_uid='create_profile')
-
 admin.site.register(ApiKey)
 admin.site.register(ApiKeyProfile)
 
