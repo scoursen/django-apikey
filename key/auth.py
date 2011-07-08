@@ -12,16 +12,12 @@ class ApiKeyAuthentication( object ):
         auth_string = request.META.get( auth_header )
         if not auth_string:
             return False
-        try:
-            key = ApiKey.objects.get(key=auth_string)
-            key.login(request.META.get('REMOTE_ADDR'))
-            request.user = key.profile.user
-            user_logged_in.send(sender=key.profile.user.__class__,
-                                request=request, user=key.profile.user)
-            return True
-        except:
-            request.user = AnonymousUser( )
-            return False
+        key = ApiKey.objects.get(key=auth_string)
+        key.login(request.META.get('REMOTE_ADDR'))
+        request.user = key.profile.user
+        user_logged_in.send(sender=key.profile.user.__class__,
+                            request=request, user=key.profile.user)
+        return True
         
     def challenge( self ):
         resp = HttpResponse( 'Authorization Required' )

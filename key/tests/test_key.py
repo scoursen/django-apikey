@@ -43,16 +43,26 @@ class ApiKeyTest(TestCase):
         auth_header = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER',
                                'X-Api-Authorization')
         auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
-        extra = {auth_header: self.user.key_profile.api_keys.all()[0].key}
+        key = self.user.key_profile.api_keys.all()[0]
+        extra = {auth_header: key.key}
         rv = client.get(reverse('test_key_list'), **extra)
-        self.assertEquals(self.user.key_profile.api_keys.all()[0].logged_ip,
-                          '127.0.0.1')
         self.assertEquals(rv.status_code, 200)
+        key.login('127.0.0.1')
+        self.assertEquals(key.logged_ip, '127.0.0.1')
+
+        rv = client.get(reverse('test_key_view', args=(key.pk,)))
+        self.assertEquals(rv.status_code,401)
+        rv = client.get(reverse('test_key_view', args=(key.pk,)), **extra)
+        self.assertEquals(rv.status_code,200)
+        rv = client.get(reverse('test_key_view', args=(key.pk+1,)), **extra)
+        self.assertEquals(rv.status_code, 404)
+        
         rv = client.get(reverse('test_key_list'))
         self.assertEquals(rv.status_code, 401)
         self.user.key_profile.api_keys.all()[0].logout()
-        self.assertEquals(self.user.key_profile.api_keys.all()[0].logged_ip,
-                          None)
+        key.logout()
+        self.assertEquals(key.logged_ip, None)
+
 
     def test_views(self):
         client = Client()
