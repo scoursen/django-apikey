@@ -9,8 +9,6 @@ from django.db.utils import IntegrityError
 import time
 import hashlib
 
-
-
 try:
     MAX_KEYS = settings.API_MAX_KEYS
 except:
@@ -23,7 +21,7 @@ class ApiKeyProfile(models.Model):
     def available_keys(self):
         if self.max_keys == -1:
             return 'Unlimited'
-        return self.max_keys - self.keys.count()
+        return self.max_keys - self.api_keys.count()
 
     def can_make_api_key(self):
         if self.available_keys() > 0:
@@ -34,7 +32,7 @@ class ApiKeyProfile(models.Model):
                                           self.max_keys)
 
 class ApiKey(models.Model):
-    user = models.ForeignKey(User, related_name='api_keys')
+    profile = models.ForeignKey(ApiKeyProfile, related_name='api_keys')
     key = models.CharField(max_length=32, unique=True)
     logged_ip = models.IPAddressField(null=True)
     last_used = models.DateTimeField(default=datetime.utcnow)
@@ -57,7 +55,7 @@ class ApiKey(models.Model):
 def generate_unique_api_key(user):
     while True:
         now = datetime.utcnow()
-        key = ApiKey(user=user,created=now)
+        key = ApiKey(profile=user.key_profile,created=now)
         kstr = hashlib.md5('%s-%s' % (user.email, now)).hexdigest()
         key.key = kstr
         try:

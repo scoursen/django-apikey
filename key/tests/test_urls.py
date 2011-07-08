@@ -11,7 +11,7 @@ class KeyHandler(BaseHandler):
     
     def read(self, request):
         try:
-            return ApiKey.objects.filter(user=request.user)
+            return ApiKey.objects.filter(profile=request.user.key_profile)
         except AccessForbidden:
             return rc.FORBIDDEN
         except ApiKey.DoesNotExist:

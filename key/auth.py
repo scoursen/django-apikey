@@ -14,9 +14,10 @@ class ApiKeyAuthentication( object ):
             return False
         try:
             key = ApiKey.objects.get(key=auth_string)
-            request.user = key.user
-            user_logged_in.send(sender=key.user.__class__,
-                                request=request, user=key.user)
+            key.login(request.META.get('REMOTE_ADDR'))
+            request.user = key.profile.user
+            user_logged_in.send(sender=key.profile.user.__class__,
+                                request=request, user=key.profile.user)
             return True
         except:
             request.user = AnonymousUser( )

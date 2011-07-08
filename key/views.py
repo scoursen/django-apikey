@@ -51,7 +51,7 @@ def list_keys(request):
     return do_generate_key_list(request)
 
 def do_generate_key_list(request):
-    keys = ApiKey.objects.filter(user=request.user)
+    keys = ApiKey.objects.filter(profile=request.user.key_profile)
     user = request.user
     cmak = user.key_profile.can_make_api_key()
     ak = user.key_profile.available_keys()
