@@ -28,7 +28,7 @@ class ApiKeyProfile(models.Model):
             return True
 
     def __unicode__(self):
-        return "ApiKeyProfile: %s, %s" % (self.keys.count(),
+        return "ApiKeyProfile: %s, %s" % (self.api_keys.count(),
                                           self.max_keys)
 
 class ApiKey(models.Model):
