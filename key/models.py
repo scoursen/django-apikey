@@ -65,10 +65,14 @@ def generate_unique_api_key(user):
             time.sleep(0.01)
 
 def create_profile(sender, instance, created, *args, **kwargs):
-    if created:
-        profile, profile_created = ApiKeyProfile.objects.get_or_create(user=instance)
-        if profile_created:
-            profile.save()
+    try:
+        if created or instance.key_profile is None:
+            profile, profile_created = ApiKeyProfile.objects.get_or_create(user=instance)
+            if profile_created:
+                profile.save()
+    except:
+        #We can fail during syncdb when using South
+        pass
 
 post_save.connect(create_profile, sender=User, dispatch_uid='create_profile')
 admin.site.register(ApiKey)
