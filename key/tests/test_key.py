@@ -1,5 +1,5 @@
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, user_logged_in
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from key.models import ApiKey, ApiKeyProfile, generate_unique_api_key
@@ -40,15 +40,22 @@ class ApiKeyTest(TestCase):
 
     def test_authentication(self):
         client = Client()
+        def t_user_logged_in(*args, **kwargs):
+            self.user_signalled = True
         auth_header = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER',
                                'X-Api-Authorization')
         auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
         key = self.user.key_profile.api_keys.all()[0]
         extra = {auth_header: key.key}
+        
+        self.user_signalled = False
+        user_logged_in.connect(t_user_logged_in, dispatch_uid='t_user_logged_in')
+
         rv = client.get(reverse('test_key_list'), **extra)
         self.assertEquals(rv.status_code, 200)
         key.login('127.0.0.1')
         self.assertEquals(key.logged_ip, '127.0.0.1')
+        self.assertTrue(self.user_signalled)
 
         rv = client.get(reverse('test_key_view', args=(key.pk,)))
         self.assertEquals(rv.status_code,401)
