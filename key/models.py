@@ -50,7 +50,7 @@ class ApiKey(models.Model):
         self.save()
             
     def __unicode__(self):
-        return self.key
+        return 'ApiKey: %s' % (self.key)
 
 def generate_unique_api_key(user):
     while True:
