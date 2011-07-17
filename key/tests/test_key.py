@@ -37,39 +37,43 @@ class ApiKeyTest(TestCase):
         self.assertFalse(self.user.key_profile.can_make_api_key())
         self.user.key_profile.max_keys = current_max
         self.user.key_profile.save()
+        k = self.user.key_profile.api_keys.all()[0]
+        self.assertEquals(self.user.key_profile.__unicode__(), 'ApiKeyProfile: 1, %s' % current_max)
+        self.assertEquals(k.__unicode__(), 'ApiKey: %s' % k.key)
 
     def test_authentication(self):
-        client = Client()
-        def t_user_logged_in(*args, **kwargs):
-            self.user_signalled = True
-        auth_header = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER',
-                               'X-Api-Authorization')
-        auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
-        key = self.user.key_profile.api_keys.all()[0]
-        extra = {auth_header: key.key}
+        def do_test_authentication(auth_header):
+            client = Client()
+            def t_user_logged_in(*args, **kwargs):
+                self.user_signalled = True
+            auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
+            key = self.user.key_profile.api_keys.all()[0]
+            extra = {auth_header: key.key}
         
-        self.user_signalled = False
-        user_logged_in.connect(t_user_logged_in, dispatch_uid='t_user_logged_in')
-
-        rv = client.get(reverse('test_key_list'), **extra)
-        self.assertEquals(rv.status_code, 200)
-        key.login('127.0.0.1')
-        self.assertEquals(key.logged_ip, '127.0.0.1')
-        self.assertTrue(self.user_signalled)
-
-        rv = client.get(reverse('test_key_view', args=(key.pk,)))
-        self.assertEquals(rv.status_code,401)
-        rv = client.get(reverse('test_key_view', args=(key.pk,)), **extra)
-        self.assertEquals(rv.status_code,200)
-        rv = client.get(reverse('test_key_view', args=(key.pk+1,)), **extra)
-        self.assertEquals(rv.status_code, 404)
-        
-        rv = client.get(reverse('test_key_list'))
-        self.assertEquals(rv.status_code, 401)
-        self.user.key_profile.api_keys.all()[0].logout()
-        key.logout()
-        self.assertEquals(key.logged_ip, None)
-
+            self.user_signalled = False
+            user_logged_in.connect(t_user_logged_in, dispatch_uid='t_user_logged_in')
+            
+            rv = client.get(reverse('test_key_list'), **extra)
+            self.assertEquals(rv.status_code, 200)
+            key.login('127.0.0.1')
+            self.assertEquals(key.logged_ip, '127.0.0.1')
+            self.assertTrue(self.user_signalled)
+            
+            rv = client.get(reverse('test_key_view', args=(key.pk,)))
+            self.assertEquals(rv.status_code,401)
+            rv = client.get(reverse('test_key_view', args=(key.pk,)), **extra)
+            self.assertEquals(rv.status_code,200)
+            rv = client.get(reverse('test_key_view', args=(key.pk+1,)), **extra)
+            self.assertEquals(rv.status_code, 404)
+            
+            rv = client.get(reverse('test_key_list'))
+            self.assertEquals(rv.status_code, 401)
+            self.user.key_profile.api_keys.all()[0].logout()
+            key.logout()
+            self.assertEquals(key.logged_ip, None)
+        do_test_authentication('X-Api-Authorization')
+        settings.APIKEY_AUTHORIZATION_HEADER = 'X-MyCoolApp-Key'
+        do_test_authentication('X-MyCoolApp-Key')
 
     def test_views(self):
         client = Client()
