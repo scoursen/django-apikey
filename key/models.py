@@ -17,6 +17,7 @@ except:
 class ApiKeyProfile(models.Model):
     user = models.OneToOneField(User, related_name='key_profile')
     max_keys = models.IntegerField(default=MAX_KEYS)
+    last_access = models.DateTimeField(default=datetime.utcnow)
 
     def available_keys(self):
         if self.max_keys == -1:
@@ -75,6 +76,13 @@ def create_profile(sender, instance, created, *args, **kwargs):
         pass
 
 post_save.connect(create_profile, sender=User, dispatch_uid='create_profile')
+
+def update_profile_timestamps(sender, instance, created, *args, **kwargs):
+    instance.profile.last_accessed = datetime.utcnow()
+    instance.profile.save()
+
+post_save.connect(update_profile_timestamps, sender=ApiKey, dispatch_uid='update_profile_timstamps')
+
 admin.site.register(ApiKey)
 admin.site.register(ApiKeyProfile)
 

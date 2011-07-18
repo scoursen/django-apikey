@@ -2,7 +2,8 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User, user_logged_in
 from django.core.urlresolvers import reverse
 from django.conf import settings
-from key.models import ApiKey, ApiKeyProfile, generate_unique_api_key
+from django.db.models.signals import post_save
+from key.models import ApiKey, ApiKeyProfile, generate_unique_api_key, MAX_KEYS
 import hashlib
 import test_urls
 
@@ -13,6 +14,20 @@ class ApiKeyTest(TestCase):
         self.user.set_password('ApiKeyTestPassword')
         self.user.save()
         generate_unique_api_key(self.user)
+
+    def test_key_profile(self):
+        profile = self.user.key_profile
+        self.assertNotEquals(profile, None)
+        self.assertEquals(profile.user, self.user)
+        self.assertEquals(profile.max_keys, MAX_KEYS)
+        self.profile_signaled = False
+        def check_signal(sender, instance, created, *args, **kwargs):
+            self.profile_signaled = True
+        post_save.connect(check_signal, sender=ApiKeyProfile,
+                          dispatch_uid='test_check_signal')
+        k = profile.api_keys.all()[0]
+        k.save()
+        self.assertTrue(self.profile_signaled)
 
     def test_key_generation(self):
         k = generate_unique_api_key(self.user)

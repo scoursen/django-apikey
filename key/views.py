@@ -13,10 +13,10 @@ import logging
 
 def get_etag_key(request):
     try:
-        lm = request.user.get_profile().last_accessed
+        lm = request.user.key_profile.last_accessed
     except:
         try:
-            lm = request.get_profile().last_accessed
+            lm = request.key_profile.last_accessed
         except:
             lm = datetime.datetime.utcnow()
     k = 'etag.%s' % (lm)
@@ -29,7 +29,7 @@ def etag_func(request, *args, **kwargs):
 
 def latest_access(request, *args, **kwargs):
     try:
-        return request.user.get_profile().last_accessed
+        return request.user.key_profile.last_accessed
     except:
         return datetime.datetime.utcnow()
 
