@@ -14,6 +14,11 @@ try:
 except:
     MAX_KEYS = -1
 
+try:
+    KEY_SIZE = settings.API_KEY_SIZE
+except:
+    KEY_SIZE = 32
+
 class ApiKeyProfile(models.Model):
     user = models.OneToOneField(User, related_name='key_profile')
     max_keys = models.IntegerField(default=MAX_KEYS)
@@ -34,8 +39,8 @@ class ApiKeyProfile(models.Model):
 
 class ApiKey(models.Model):
     profile = models.ForeignKey(ApiKeyProfile, related_name='api_keys')
-    key = models.CharField(max_length=32, unique=True)
-    logged_ip = models.IPAddressField(null=True)
+    key = models.CharField(max_length=KEY_SIZE, unique=True, blank=True, default=None)
+    logged_ip = models.CharField(max_length=32, null=True, blank=True, default=None)
     last_used = models.DateTimeField(default=datetime.utcnow)
     created = models.DateTimeField(default=datetime.utcnow)
     
@@ -53,17 +58,25 @@ class ApiKey(models.Model):
     def __unicode__(self):
         return 'ApiKey: %s' % (self.key)
 
-def generate_unique_api_key(user):
+def generate_unique_key_code(user, key):
     while True:
         now = datetime.utcnow()
-        key = ApiKey(profile=user.key_profile,created=now)
-        kstr = hashlib.md5('%s-%s' % (user.email, now)).hexdigest()
+        key.created = now
+        kstr = hashlib.md5('%s-%s' % (user.email, now)).hexdigest()[:KEY_SIZE]
         key.key = kstr
         try:
             key.save()
             return key
         except IntegrityError:
             time.sleep(0.01)
+
+def generate_unique_api_key(user,key_object=None):
+    if not key_object:
+        key = ApiKey(profile=user.key_profile)
+    else:
+        key = key_object
+    key = generate_unique_key_code(user, key)
+    return key
 
 def create_profile(sender, instance, created, *args, **kwargs):
     try:
@@ -83,6 +96,4 @@ def update_profile_timestamps(sender, instance, created, *args, **kwargs):
 
 post_save.connect(update_profile_timestamps, sender=ApiKey, dispatch_uid='update_profile_timstamps')
 
-admin.site.register(ApiKey)
-admin.site.register(ApiKeyProfile)
 
