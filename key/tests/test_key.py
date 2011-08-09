@@ -1,18 +1,33 @@
 from django.test import TestCase, Client
-from django.contrib.auth.models import User, user_logged_in
+from django.contrib.auth.models import *
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.db.models.signals import post_save
-from key.models import ApiKey, ApiKeyProfile, generate_unique_api_key, MAX_KEYS
+from key.models import ApiKey, ApiKeyProfile, generate_unique_api_key, MAX_KEYS, create_group
+from key.signals import *
+import logging
 import hashlib
 import test_urls
 
 class ApiKeyTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create(username='ApiKeyTest',
-                                        email='ApiKeyTest@t.com')
-        self.user.set_password('ApiKeyTestPassword')
+        create_group()
+        gr, cr = Group.objects.get_or_create(name='API User')
+        if cr:
+            ct = ContentType.objects.get(app_label="key", model="apikey")
+            p, pc = Permission.objects.get_or_create(name="Can generate an API key",
+                                                     codename="can_make_api_key",
+                                                     content_type=ct)
+            gr.permissions.add(p)
+            gr.save()
+        self.user = User.objects.create_user(username='ApiKeyTest',
+                                             email='ApiKeyTest@t.com',
+                                             password='ApiKeyTestPassword')
+        gr = Group.objects.get(name="API User")
         self.user.save()
+        self.user.groups.add(gr)
+        self.user.save()
+        gr.save()
         generate_unique_api_key(self.user)
 
     def test_key_profile(self):
@@ -99,8 +114,10 @@ class ApiKeyTest(TestCase):
         rv = client.get(reverse('api_key_delete',args=('ValueDoesntMatter',)))
         self.assertEquals(rv.status_code, 302)
         client = Client()
-        client.login(username='ApiKeyTest',
-                     password='ApiKeyTestPassword')
+        self.assertTrue(client.login(username='ApiKeyTest',
+                                     password='ApiKeyTestPassword'))
+        u = User.objects.get(username='ApiKeyTest')
+        self.assertTrue(u.has_perm('key.can_make_api_key'))
         rv = client.get(reverse('api_key_list'))
         self.assertEquals(rv.status_code, 200)
         original_list = list(self.user.key_profile.api_keys.all())

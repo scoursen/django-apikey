@@ -1,7 +1,7 @@
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.http import condition, last_modified
 from django.views.decorators.cache import cache_control, cache_page
 from django.core.cache import cache
@@ -13,10 +13,10 @@ import logging
 
 def get_etag_key(request):
     try:
-        lm = request.user.key_profile.last_accessed
+        lm = request.user.key_profile.last_access
     except:
         try:
-            lm = request.key_profile.last_accessed
+            lm = request.key_profile.last_access
         except:
             lm = datetime.datetime.utcnow()
     k = 'etag.%s' % (lm)
@@ -29,13 +29,12 @@ def etag_func(request, *args, **kwargs):
 
 def latest_access(request, *args, **kwargs):
     try:
-        return request.user.key_profile.last_accessed
+        return request.user.key_profile.last_access
     except:
         return datetime.datetime.utcnow()
 
-
-
 @login_required
+@permission_required('key.can_make_api_key')
 @condition(etag_func=etag_func, last_modified_func=latest_access)
 @cache_page(1)
 def generate_key(request):
@@ -45,6 +44,7 @@ def generate_key(request):
 
 
 @login_required
+@permission_required('key.can_make_api_key')
 @condition(etag_func=etag_func, last_modified_func=latest_access)
 @cache_page(1)
 def list_keys(request):
@@ -61,6 +61,7 @@ def do_generate_key_list(request):
                                 'available_keys': ak },
                               context_instance=RequestContext(request))
 
+@permission_required('key.can_make_api_key')
 @login_required
 @condition(etag_func=etag_func, last_modified_func=latest_access)
 @cache_page(1)
