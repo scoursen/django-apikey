@@ -60,7 +60,6 @@ if 'django.middleware.cache.UpdateCacheMiddleware' in settings.MIDDLEWARE_CLASSE
             rv = super(CachedView, self).get(request, *args, **kwargs)
             if not request.user.is_anonymous():
                 cache.patch_cache_control(response, private=True)
-#                rv._headers['cache-control'] = ('Cache-Control', 'private')
             return rv
 else:
     class CachedView(object):
