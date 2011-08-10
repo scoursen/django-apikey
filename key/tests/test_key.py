@@ -12,14 +12,6 @@ import test_urls
 class ApiKeyTest(TestCase):
     def setUp(self):
         create_group()
-        gr, cr = Group.objects.get_or_create(name='API User')
-        if cr:
-            ct = ContentType.objects.get(app_label="key", model="apikey")
-            p, pc = Permission.objects.get_or_create(name="Can generate an API key",
-                                                     codename="can_make_api_key",
-                                                     content_type=ct)
-            gr.permissions.add(p)
-            gr.save()
         self.user = User.objects.create_user(username='ApiKeyTest',
                                              email='ApiKeyTest@t.com',
                                              password='ApiKeyTestPassword')
@@ -123,12 +115,18 @@ class ApiKeyTest(TestCase):
         original_list = list(self.user.key_profile.api_keys.all())
         self.assertEquals(self.user.key_profile.api_keys.count(), 1)
         rv = client.post(reverse('api_key_create'))
+        self.assertEquals(rv.status_code, 302)
+        self.assertEquals(rv['Location'], 
+                          'http://testserver' + reverse('api_key_list'))
+        rv = client.get(rv['Location'])
         self.assertEquals(rv.status_code, 200)
         self.assertEquals(self.user.key_profile.api_keys.count(), 2)
         k = self.user.key_profile.api_keys.all()[0]
         self.assertTrue(k not in original_list)
         rv = client.post(reverse('api_key_delete',args=(k.key,)))
         self.assertTrue(k not in self.user.key_profile.api_keys.all())
-        self.assertEquals(rv.status_code, 200)
+        self.assertEquals(rv.status_code, 302)
+        self.assertEquals(rv['Location'],
+                          'http://testserver' + reverse('api_key_list'))
         self.assertEquals(self.user.key_profile.api_keys.count(), 1)
         

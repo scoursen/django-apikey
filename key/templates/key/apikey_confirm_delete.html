@@ -1,0 +1,12 @@
+{%extends "key/base.html"%}
+
+{%block content%}
+<p>Are you sure you want to delete this API key?
+<p>Be sure to remove any references to this code -- {{object.key}} -- in any of your system configurations or code.
+<form method="POST">
+  {%csrf_token%}
+  <input type="submit" name="action" value="Delete">
+  <input type="submit" name="action" value="Cancel">
+</forM>
+
+{%endblock%}

@@ -1,0 +1,9 @@
+{%extends "admin/change_form.html" %}
+
+{%block after_related_objects%}
+{%if perms.can_make_api_key%}
+  {%if original.pk%}
+    <input type="submit" name="generate" value="Make a new API key" />
+  {%endif%}
+{%endif%}
+{%endblock%}
