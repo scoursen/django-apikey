@@ -4,23 +4,31 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.db.models.signals import post_save
-from key.models import ApiKey, ApiKeyProfile, generate_unique_api_key, MAX_KEYS, create_group
+from key.models import *
 from key.signals import *
 import logging
 import hashlib
 import test_urls
 
 class ApiKeyTest(TestCase):
+    def __init__(self, *args, **kwargs):
+        settings.USE_API_GROUP = kwargs.get('USE_API_GROUP', False)
+        if kwargs.has_key('USE_API_GROUP'):
+            del kwargs['USE_API_GROUP']
+        super(ApiKeyTest, self).__init__(*args, **kwargs)
+
     def setUp(self):
         create_group()
         self.user = User.objects.create_user(username='ApiKeyTest',
                                              email='ApiKeyTest@example.com',
                                              password='ApiKeyTestPassword')
-        gr = Group.objects.get(name="API User")
-        self.user.save()
-        self.user.groups.add(gr)
-        self.user.save()
-        gr.save()
+        if USE_API_GROUP:
+            gr = Group.objects.get(name="API User")
+            self.user.groups.add(gr)
+            self.user.save()
+            gr.save()
+        else:
+            assign_permissions(self.user)
         k = generate_unique_api_key(self.user)
         self.assertTrue(k is not None)
         kstr = k.key
@@ -80,7 +88,6 @@ class ApiKeyTest(TestCase):
             auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
             key = self.user.key_profile.api_keys.all()[0]
             extra = {auth_header: key.key}
-        
             self.user_signalled = False
             user_logged_in.connect(t_user_logged_in, dispatch_uid='t_user_logged_in')
             
@@ -102,9 +109,12 @@ class ApiKeyTest(TestCase):
             self.user.key_profile.api_keys.all()[0].logout()
             key.logout()
             self.assertEquals(key.logged_ip, None)
+        original = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER', 'X-Api-Authorization')
+        settings.APIKEY_AUTHORIZATION_HEADER = 'X-Api-Authorization'
         do_test_authentication('X-Api-Authorization')
         settings.APIKEY_AUTHORIZATION_HEADER = 'X-MyCoolApp-Key'
         do_test_authentication('X-MyCoolApp-Key')
+        settings.APIKEY_AUTHORIZATION_HEADER = original
 
     def test_perm_check(self):
         client = Client()
@@ -157,3 +167,6 @@ class ApiKeyTest(TestCase):
         rv = client.get('/admin/key/apikeyprofile/1/')
         self.assertEquals(rv.status_code, 200)
 
+class ApiKeyGroupTest(ApiKeyTest):
+    def __init__(self, *args, **kwargs):
+        super(ApiKeyGroupTest, self).__init__(USE_API_GROUP=True, *args, **kwargs)

@@ -18,6 +18,11 @@ try:
 except:
     KEY_SIZE = 32
 
+try:
+    USE_API_GROUP = settings.USE_API_GROUP
+except:
+    USE_API_GROUP = None
+
 class ApiKeyProfile(models.Model):
     user = models.OneToOneField(User, related_name='key_profile')
     max_keys = models.IntegerField(default=MAX_KEYS)
@@ -61,24 +66,34 @@ class ApiKey(models.Model):
     def __unicode__(self):
         return 'ApiKey: %s' % (self.key)
 
+def assign_permissions(user_or_group):
+    ct = ContentType.objects.get(app_label="key", model="apikey")
+    can_gen, pc = Permission.objects.get_or_create(name="Can generate an API key",
+                                             codename="can_make_api_key",
+                                             content_type=ct)
+    ct = ContentType.objects.get(app_label='key', model='apikeyprofile')
+    has_prof, pc = Permission.objects.get_or_create(name="Has an API key profile",
+                                             codename="has_api_key_profile",
+                                             content_type=ct)
+    can_login, pc = Permission.objects.get_or_create(name="Can use the API",
+                                                     codename="can_use_api",
+                                                     content_type=ct)
+    perm_list = getattr(user_or_group, 'permissions', 
+                        getattr(user_or_group, 'user_permissions'))
+    perm_list.add(can_gen)
+    perm_list.add(has_prof)
+    perm_list.add(can_login)
+    for permission in [ 'add_apikey', 'change_apikey', 'delete_apikey' ]:
+        p = Permission.objects.get(codename=permission)
+        perm_list.add(p)
+    p = Permission.objects.get(codename='change_apikeyprofile')
+    perm_list.add(p)
+    user_or_group.save()
+    return user_or_group
+    
 def create_group():
-    gr, cr = Group.objects.get_or_create(name='API User')
-    if cr:
-        ct = ContentType.objects.get(app_label="key", model="apikey")
-        p, pc = Permission.objects.get_or_create(name="Can generate an API key",
-                                                 codename="can_make_api_key",
-                                                 content_type=ct)
-        gr.permissions.add(p)
-        p.save()
-        p, pc = Permission.objects.get_or_create(name="Has an API key profile",
-                                                 codename="has_api_key_profile",
-                                                 content_type=ct)
-        gr.permissions.add(p)
-        p.save()
-        for permission in [ 'add_apikey', 'change_apikey', 'delete_apikey' ]:
-                p = Permission.objects.get(codename=permission)
-                gr.permissions.add(p)
-        p = Permission.objects.get(codename='change_apikeyprofile')
-        gr.permissions.add(p)
-        gr.save()
-    return gr
+    if USE_API_GROUP:
+        gr, cr = Group.objects.get_or_create(name='API User')
+        if cr:
+            assign_permissions(gr)
+        return gr

@@ -40,7 +40,7 @@ def latest_access(request, *args, **kwargs):
         return datetime.datetime.utcnow()
 
 class ProtectedView(object):
-    @method_decorator(permission_required('key.can_make_api_key'))
+    @method_decorator(permission_required('key.has_api_key_profile'))
     def dispatch(self, *args, **kwargs):
         return super(ProtectedView, self).dispatch(*args, **kwargs)
 

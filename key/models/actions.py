@@ -15,11 +15,10 @@ def perm_check(user):
             return
     except:
         if user.has_perm("key.has_api_key_profile"):
-            if user.groups.filter(name='API User').count():
-                profile, created = ApiKeyProfile.objects.get_or_create(user=user)
-                if created:
-                    api_user_created.send(sender=user.__class__,
-                                          instance=user)
+            profile, created = ApiKeyProfile.objects.get_or_create(user=user)
+            if created:
+                api_user_created.send(sender=user.__class__,
+                                      instance=user)
             else:
                 raise PermissionDenied
         else:
