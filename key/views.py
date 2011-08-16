@@ -50,7 +50,7 @@ class ProtectedView(object):
         return context
 
 if 'django.middleware.cache.UpdateCacheMiddleware' in settings.MIDDLEWARE_CLASSES:
-    from django.utils import cache
+    from django import utils
     class CachedView(object):
         @method_decorator(cache_page(1))
         @method_decorator(condition(etag_func=etag_func, last_modified_func=latest_access))
@@ -59,7 +59,7 @@ if 'django.middleware.cache.UpdateCacheMiddleware' in settings.MIDDLEWARE_CLASSE
             import time            
             rv = super(CachedView, self).get(request, *args, **kwargs)
             if not request.user.is_anonymous():
-                cache.patch_cache_control(response, private=True)
+                utils.cache.patch_cache_control(rv, private=True)
             return rv
 else:
     class CachedView(object):

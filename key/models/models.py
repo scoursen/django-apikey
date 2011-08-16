@@ -71,7 +71,7 @@ def create_group():
         gr.permissions.add(p)
         p.save()
         p, pc = Permission.objects.get_or_create(name="Has an API key profile",
-                                                 codename="has_key_profile",
+                                                 codename="has_api_key_profile",
                                                  content_type=ct)
         gr.permissions.add(p)
         p.save()
@@ -81,4 +81,4 @@ def create_group():
         p = Permission.objects.get(codename='change_apikeyprofile')
         gr.permissions.add(p)
         gr.save()
-
+    return gr

@@ -14,7 +14,7 @@ def perm_check(user):
         if user.key_profile:
             return
     except:
-        if user.has_perm("key.has_key_profile"):
+        if user.has_perm("key.has_api_key_profile"):
             if user.groups.filter(name='API User').count():
                 profile, created = ApiKeyProfile.objects.get_or_create(user=user)
                 if created:
