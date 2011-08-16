@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import *
 from django.core.urlresolvers import reverse
+from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.db.models.signals import post_save
 from key.models import ApiKey, ApiKeyProfile, generate_unique_api_key, MAX_KEYS, create_group
@@ -13,14 +14,22 @@ class ApiKeyTest(TestCase):
     def setUp(self):
         create_group()
         self.user = User.objects.create_user(username='ApiKeyTest',
-                                             email='ApiKeyTest@t.com',
+                                             email='ApiKeyTest@example.com',
                                              password='ApiKeyTestPassword')
         gr = Group.objects.get(name="API User")
         self.user.save()
         self.user.groups.add(gr)
         self.user.save()
         gr.save()
-        generate_unique_api_key(self.user)
+        k = generate_unique_api_key(self.user)
+        self.assertTrue(k is not None)
+        kstr = k.key
+        k = generate_unique_api_key(self.user, k)
+        self.assertTrue(k.key is not kstr)
+        self.unauthorized_user = User.objects.create_user(username="NonAuthorized",
+                                                          email="NonAuthorized@example.com",
+                                                          password="NonAuthorizedPassword")
+        self.unauthorized_user.save()
 
     def test_key_profile(self):
         profile = self.user.key_profile
@@ -97,6 +106,15 @@ class ApiKeyTest(TestCase):
         settings.APIKEY_AUTHORIZATION_HEADER = 'X-MyCoolApp-Key'
         do_test_authentication('X-MyCoolApp-Key')
 
+    def test_perm_check(self):
+        client = Client()
+        client.login(username="NonAuthorized", password="NonAuthorizedPassword")
+        rv = client.get(reverse('api_key_create'))
+        self.assertEquals(rv.status_code, 302)
+        self.assertRaises(PermissionDenied,
+                          generate_unique_api_key,
+                          self.unauthorized_user)
+        
     def test_views(self):
         client = Client()
         rv = client.get(reverse('api_key_list'))
@@ -120,13 +138,22 @@ class ApiKeyTest(TestCase):
                           'http://testserver' + reverse('api_key_list'))
         rv = client.get(rv['Location'])
         self.assertEquals(rv.status_code, 200)
-        self.assertEquals(self.user.key_profile.api_keys.count(), 2)
-        k = self.user.key_profile.api_keys.all()[0]
+        self.assertEquals(self.user.key_profile.api_keys.count(), 2)        
+        k = self.user.key_profile.api_keys.latest('created')
         self.assertTrue(k not in original_list)
+        rv = client.post(reverse('api_key_delete',args=(k.key,)), {'action': 'Cancel'})
+        self.assertTrue(k in self.user.key_profile.api_keys.all())
+        self.assertEquals(rv.status_code, 302)
         rv = client.post(reverse('api_key_delete',args=(k.key,)))
         self.assertTrue(k not in self.user.key_profile.api_keys.all())
         self.assertEquals(rv.status_code, 302)
         self.assertEquals(rv['Location'],
                           'http://testserver' + reverse('api_key_list'))
         self.assertEquals(self.user.key_profile.api_keys.count(), 1)
-        
+        rv = client.get('/admin/key/')
+        self.assertEquals(rv.status_code, 200)
+        rv = client.get('/admin/key/apikey/1/')
+        self.assertEquals(rv.status_code, 200)
+        rv = client.get('/admin/key/apikeyprofile/1/')
+        self.assertEquals(rv.status_code, 200)
+
