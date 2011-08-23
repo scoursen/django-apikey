@@ -6,7 +6,7 @@
     <h3>Active Keys for {{user.username}}</h3>
     <ul>
   {%endif%}
-      <li>{{key.key}}  (<a href="{%url key.delete key.pk%}">delete</a>)</li>
+      <li>{{key.key}}  (<a href="{%url key.delete key.key%}">delete</a>)</li>
   {%if forloop.last%}
     </ul>
   {%endif%}
