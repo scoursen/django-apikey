@@ -1,7 +1,7 @@
 {%extends "key/base.html" %}
 
 {%block content%}
-<form method="POST" action="{%url api_key_create%}">
+<form method="POST" action="{%url key.create%}">
   {% csrf_token %}
   {{form.as_p}}
   <input type="submit" value="Generate API key"/>

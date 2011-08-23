@@ -62,7 +62,7 @@ class ApiKey(models.Model):
     def logout(self):
         self.logged_ip = None
         self.save()
-            
+
     def __unicode__(self):
         return 'ApiKey: %s' % (self.key)
 

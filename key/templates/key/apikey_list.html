@@ -6,7 +6,7 @@
     <h3>Active Keys for {{user.username}}</h3>
     <ul>
   {%endif%}
-      <li>{{key.key}}  (<a href="{%url api_key_delete key.pk%}">delete</a>)</li>
+      <li>{{key.key}}  (<a href="{%url key.delete key.pk%}">delete</a>)</li>
   {%if forloop.last%}
     </ul>
   {%endif%}
@@ -19,7 +19,7 @@
 {%else%}
 <p>You can create {{available_keys}} more keys.
 {%endif%}
-<form method="POST" action="{%url api_key_create%}">
+<form method="POST" action="{%url key.create%}">
   {% csrf_token %}
   <input type="submit" value="Generate API key"/>
 </form>

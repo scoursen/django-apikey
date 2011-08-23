@@ -67,7 +67,7 @@ else:
 
 class KeyCreateView(ProtectedView, CreateView):
     def get_success_url(self):
-        return reverse('api_key_list')
+        return reverse('key.list')
 
     def post(self, request, *args, **kwargs):
         self.object = generate_unique_api_key(self.request.user)
@@ -90,7 +90,7 @@ class KeyListView(CachedView, ProtectedView, ListView):
 
 class KeyDeleteView(ProtectedView, DeleteView):
     def get_success_url(self):
-        return reverse('api_key_list')
+        return reverse('key.list')
 
     def get_object(self):
         return self.get_queryset().get(key=self.kwargs['key_code'])

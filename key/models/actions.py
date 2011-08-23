@@ -24,36 +24,24 @@ def perm_check(user):
         else:
             raise PermissionDenied
 
-def generate_unique_key_code(user, key):
+def generate_unique_key_code(user):
     perm_check(user)
     while True:
         now = datetime.utcnow()
         kstr = hashlib.md5('%s-%s' % (user.email, now)).hexdigest()[:KEY_SIZE]
-        if key:
-            key.key = kstr
-            key.created = now
+        key, created = ApiKey.objects.get_or_create(profile=user.key_profile,
+                                                    key=kstr,
+                                                    created=now)
+        if created:
             try:
                 key.save()
                 return key
-            except IntegrityError:
-                time.sleep(0.01)
-        else:
-            key, created = ApiKey.objects.get_or_create(profile=user.key_profile,
-                                                        key=kstr,
-                                                        created=now)
-            if not created:
-                time.sleep(0.01)
-            else:
-                return key
+            except IntegriyError:
+                pass
+        time.sleep(0.01)
 
-def generate_unique_api_key(user,key_object=None):
-    perm_check(user)
-    if not key_object:
-        key = None
-    else:
-        key = key_object
-    key = generate_unique_key_code(user, key)
-    return key
+def generate_unique_api_key(user):
+    return generate_unique_key_code(user)
 
 def update_profile_timestamps(sender, instance, created, *args, **kwargs):
     instance.profile.last_accessed = datetime.utcnow()

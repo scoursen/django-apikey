@@ -1,5 +1,6 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import *
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
@@ -18,6 +19,7 @@ class ApiKeyTest(TestCase):
         super(ApiKeyTest, self).__init__(*args, **kwargs)
 
     def setUp(self):
+        cache.clear()
         create_group()
         self.user = User.objects.create_user(username='ApiKeyTest',
                                              email='ApiKeyTest@example.com',
@@ -32,8 +34,6 @@ class ApiKeyTest(TestCase):
         k = generate_unique_api_key(self.user)
         self.assertTrue(k is not None)
         kstr = k.key
-        k = generate_unique_api_key(self.user, k)
-        self.assertTrue(k.key is not kstr)
         self.unauthorized_user = User.objects.create_user(username="NonAuthorized",
                                                           email="NonAuthorized@example.com",
                                                           password="NonAuthorizedPassword")
@@ -119,7 +119,7 @@ class ApiKeyTest(TestCase):
     def test_perm_check(self):
         client = Client()
         client.login(username="NonAuthorized", password="NonAuthorizedPassword")
-        rv = client.get(reverse('api_key_create'))
+        rv = client.get(reverse('key.create'))
         self.assertEquals(rv.status_code, 302)
         self.assertRaises(PermissionDenied,
                           generate_unique_api_key,
@@ -127,38 +127,40 @@ class ApiKeyTest(TestCase):
         
     def test_views(self):
         client = Client()
-        rv = client.get(reverse('api_key_list'))
+        rv = client.get(reverse('key.list'))
         self.assertEquals(rv.status_code, 302)
-        rv = client.get(reverse('api_key_create'))
+        rv = client.get(reverse('key.create'))
         self.assertEquals(rv.status_code, 302)
-        rv = client.get(reverse('api_key_delete',args=('ValueDoesntMatter',)))
+        rv = client.get(reverse('key.delete',args=('ValueDoesntMatter',)))
         self.assertEquals(rv.status_code, 302)
         client = Client()
         self.assertTrue(client.login(username='ApiKeyTest',
                                      password='ApiKeyTestPassword'))
         u = User.objects.get(username='ApiKeyTest')
         self.assertTrue(u.has_perm('key.can_make_api_key'))
-        rv = client.get(reverse('api_key_list'))
+        rv = client.get(reverse('key.list'))
         self.assertEquals(rv.status_code, 200)
         original_list = list(self.user.key_profile.api_keys.all())
         self.assertEquals(self.user.key_profile.api_keys.count(), 1)
-        rv = client.post(reverse('api_key_create'))
+        rv = client.post(reverse('key.create'))
         self.assertEquals(rv.status_code, 302)
         self.assertEquals(rv['Location'], 
-                          'http://testserver' + reverse('api_key_list'))
+                          'http://testserver' + reverse('key.list'))
         rv = client.get(rv['Location'])
         self.assertEquals(rv.status_code, 200)
         self.assertEquals(self.user.key_profile.api_keys.count(), 2)        
         k = self.user.key_profile.api_keys.latest('created')
-        self.assertTrue(k not in original_list)
-        rv = client.post(reverse('api_key_delete',args=(k.key,)), {'action': 'Cancel'})
+        self.assertEquals(k, k)
+        [self.assertNotEquals(k, x) for x in original_list]
+        found = False
         self.assertTrue(k in self.user.key_profile.api_keys.all())
+        rv = client.post(reverse('key.delete',args=(k.key,)), {'action': 'Cancel'})
         self.assertEquals(rv.status_code, 302)
-        rv = client.post(reverse('api_key_delete',args=(k.key,)))
+        rv = client.post(reverse('key.delete',args=(k.key,)))
         self.assertTrue(k not in self.user.key_profile.api_keys.all())
         self.assertEquals(rv.status_code, 302)
         self.assertEquals(rv['Location'],
-                          'http://testserver' + reverse('api_key_list'))
+                          'http://testserver' + reverse('key.list'))
         self.assertEquals(self.user.key_profile.api_keys.count(), 1)
         rv = client.get('/admin/key/')
         self.assertEquals(rv.status_code, 200)
@@ -166,6 +168,7 @@ class ApiKeyTest(TestCase):
         self.assertEquals(rv.status_code, 200)
         rv = client.get('/admin/key/apikeyprofile/1/')
         self.assertEquals(rv.status_code, 200)
+        self.user.key_profile.api_keys.all().delete()
 
 class ApiKeyGroupTest(ApiKeyTest):
     def __init__(self, *args, **kwargs):
