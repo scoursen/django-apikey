@@ -8,20 +8,9 @@ import logging
 import time
 import hashlib
 
-try:
-    MAX_KEYS = settings.API_MAX_KEYS
-except:
-    MAX_KEYS = -1
-
-try:
-    KEY_SIZE = settings.API_KEY_SIZE
-except:
-    KEY_SIZE = 32
-
-try:
-    USE_API_GROUP = settings.USE_API_GROUP
-except:
-    USE_API_GROUP = None
+MAX_KEYS = getattr(settings, 'MAX_KEYS', -1)
+KEY_SIZE = getattr(settings, 'KEY_SIZE', 32)
+USE_API_GROUP = getattr(settings, 'USE_API_GROUP', False)
 
 class ApiKeyProfile(models.Model):
     user = models.OneToOneField(User, related_name='key_profile')
