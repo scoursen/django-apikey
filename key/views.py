@@ -13,6 +13,7 @@ from django.core.cache import cache
 from key.models import ApiKey, generate_unique_api_key
 from key.forms import *
 from django.contrib.auth.models import User
+import hashlib
 import datetime
 import logging
 import decorator
@@ -21,12 +22,10 @@ def get_etag_key(request):
     try:
         lm = request.user.key_profile.last_access
     except:
-        try:
-            lm = request.key_profile.last_access
-        except:
-            lm = datetime.datetime.utcnow()
+        lm = datetime.datetime.utcnow()
     k = 'etag.%s' % (lm)
-    return k.replace(' ', '_')
+    k = k.replace(' ', '_')
+    return hashlib.md5(k).hexdigest()
 
 def etag_func(request, *args, **kwargs):
     etag_key = get_etag_key(request)
@@ -60,6 +59,9 @@ if 'django.middleware.cache.UpdateCacheMiddleware' in settings.MIDDLEWARE_CLASSE
             rv = super(CachedView, self).get(request, *args, **kwargs)
             if not request.user.is_anonymous():
                 utils.cache.patch_cache_control(rv, private=True)
+            etag = get_etag_key(request)
+            if etag:
+                rv['ETag'] = etag
             return rv
 else:
     class CachedView(object):
