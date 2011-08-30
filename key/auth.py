@@ -4,17 +4,18 @@ from django.contrib.auth.models import *
 from key.models import ApiKey, USE_API_GROUP
 import logging
 
+AUTH_HEADER = getattr(settings, 'API_KEY_AUTHORIZATION_HEADER', 'X-Api-Authorization')
+
 class ApiKeyAuthentication(object):
     def is_authenticated(self, request):
-        auth_header = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER',
-                               'X-Api-Authorization')
+        auth_header = AUTH_HEADER
         auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
         auth_string = request.META.get(auth_header)
         if not auth_string:
             return False
         try:
             key = ApiKey.objects.get(key=auth_string)
-        except key.DoesNotExist:
+        except ApiKey.DoesNotExist:
             return False
         key.login(request.META.get('REMOTE_ADDR'))
         if not key.profile.user.has_perm('key.can_use_api'):
@@ -27,9 +28,7 @@ class ApiKeyAuthentication(object):
     def challenge(self):
         resp = HttpResponse('Authorization Required')
         resp['WWW-Authenticate'] = 'KeyBasedAuthentication realm="API"'       
-        auth_header = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER',
-                               None)
-        if auth_header:
+        if AUTH_HEADER:
             resp[auth_header] = 'Key Needed'
         resp.status_code = 401
         return resp
