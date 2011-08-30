@@ -9,5 +9,6 @@ __all__ = ['ApiKeyProfile',
            'assign_permissions',
            'MAX_KEYS',
            'USE_API_GROUP',
+           'KEY_SIZE',
            ]
 
