@@ -10,3 +10,9 @@ urlpatterns = patterns('key.views',
                            KeyDeleteView.as_view(),
                            name='key.delete' ),
                        )
+
+import sys
+if 'test' in sys.argv:
+    from django.contrib import admin
+    admin.autodiscover()
+    urlpatterns += patterns('', url(r'^admin/', include(admin.site.urls)))
