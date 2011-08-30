@@ -23,7 +23,7 @@ def get_etag_key(request):
         lm = request.user.key_profile.last_access
     except:
         lm = datetime.datetime.utcnow()
-    k = 'etag.%s' % (lm)
+    k = 'etag.%s.%s.%s' % (lm, request.path, request.user)
     k = k.replace(' ', '_')
     return hashlib.md5(k).hexdigest()
 
