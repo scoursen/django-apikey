@@ -55,10 +55,12 @@ class ApiKeyTest(TestCase):
 
     def test_key_generation(self):
         k = generate_unique_api_key(self.user)
+        ksize = KEY_SIZE
         my_kstr = hashlib.md5('%s-%s' % (self.user.email,
-                                         k.created)).hexdigest()[:settings.API_KEY_SIZE]
+                                         k.created)).hexdigest()[:ksize]
         self.assertTrue(self.user.key_profile.can_make_api_key())
         self.assertEquals(self.user.key_profile.available_keys(), 'Unlimited')
+        self.assertEquals(len(my_kstr), len(k.key))
         self.assertEquals(my_kstr, k.key)
         self.assertEquals(self.user.key_profile.api_keys.count(), 2)
         k.delete()
