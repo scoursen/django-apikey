@@ -2,9 +2,12 @@ django-apikey
 
 Simple, straight forward API key authentication for django-piston.
 
-Requirements:
+Requirements (can be install with pip install -r requirements.txt):
 django-piston
 Using django.contrib.auth
+
+You can install into a virtualenv and run the tests:
+./manage.py test key --settings="key.settings"
 
 There is a simple template file in templates/keys.html.  This file is used
 by all the project's views.
