@@ -41,10 +41,12 @@ def generate_unique_key_code(user):
         time.sleep(0.01)
 
 def generate_unique_api_key(user):
-    return generate_unique_key_code(user)
+    key = generate_unique_key_code(user)
+    api_key_created.send(sender=key.__class__, instance=key)
+    return key
 
 def update_profile_timestamps(sender, instance, created, *args, **kwargs):
-    instance.profile.last_accessed = datetime.utcnow()
+    instance.profile.last_access = datetime.utcnow()
     instance.profile.save()
 post_save.connect(update_profile_timestamps, sender=ApiKey, dispatch_uid='update_profile_timstamps')
 
