@@ -31,10 +31,12 @@ APIKEY_AUTHORIZATION_HEADER = 'X-MyCoolApp-Authorization'
 This setting defaults to the X-Api-Authorization header.
 
 The numer of keys that a User can be defined in your project's settings.py. \  
-Setting API_MAX_KEYS to a positive integer will create a limit on the number of keys an individual User can create.  Setting it to -1 allows Users to create an
+Setting APIKEY_MAX_KEYS to a positive integer will create a limit on the number of keys an individual User can create.  Setting it to -1 allows Users to create an
 unlimited number of keys.
 
-API_MAX_KEYS = -1
+APIKEY_MAX_KEYS = -1
 
 For example, this will allow a User to make an unlimited number of keys.
 
+You can control the length of the key by setting APIKEY_KEY_SIZE.  Currently, there is a maximum
+key size of 32 characters.
