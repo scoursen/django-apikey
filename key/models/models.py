@@ -7,10 +7,7 @@ from django.db.utils import IntegrityError
 import logging
 import time
 import hashlib
-
-MAX_KEYS = getattr(settings, 'API_MAX_KEYS', -1)
-KEY_SIZE = getattr(settings, 'API_KEY_SIZE', 32)
-USE_API_GROUP = getattr(settings, 'USE_API_GROUP', False)
+from key.settings import MAX_KEYS, KEY_SIZE, USE_API_GROUP
 
 class ApiKeyProfile(models.Model):
     user = models.OneToOneField(User, related_name='key_profile')
