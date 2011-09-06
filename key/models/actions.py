@@ -50,7 +50,7 @@ def update_profile_timestamps(sender, instance, created, *args, **kwargs):
     instance.profile.save()
 post_save.connect(update_profile_timestamps, sender=ApiKey, dispatch_uid='update_profile_timstamps')
 
-def create_key_profile(sender, instance, created, *args, **kwargs):
+def create_key_profile(user):
     profile, c = ApiKeyProfile.objects.get_or_create(user=instance)
-post_save.connect(create_key_profile, sender=User, dispatch_uid='create_key_profile')
+    return profile
 

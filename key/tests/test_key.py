@@ -33,6 +33,7 @@ class ApiKeyTest(TestCase):
             assign_permissions(self.user)
         k = generate_unique_api_key(self.user)
         self.assertTrue(k is not None)
+        self.assertNotEquals(k.key, None)
         kstr = k.key
         self.unauthorized_user = User.objects.create_user(username="NonAuthorized",
                                                           email="NonAuthorized@example.com",
@@ -111,13 +112,20 @@ class ApiKeyTest(TestCase):
             self.user.key_profile.api_keys.all()[0].logout()
             key.logout()
             self.assertEquals(key.logged_ip, None)
+        import key.settings
         original = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER', 'X-Api-Authorization')
-        settings.APIKEY_AUTHORIZATION_HEADER = 'X-Api-Authorization'
+        setattr(settings, 'APIKEY_AUTHORIZATION_HEADER', 'X-Api-Authorization')
+        key.settings.reload()
+        self.assertEquals(key.settings.AUTH_HEADER, 'X-Api-Authorization')
         do_test_authentication('X-Api-Authorization')
-        settings.APIKEY_AUTHORIZATION_HEADER = 'X-MyCoolApp-Key'
+        setattr(settings, 'APIKEY_AUTHORIZATION_HEADER', 'X-MyCoolApp-Key')
+        key.settings.reload()
+        self.assertEquals(key.settings.AUTH_HEADER, 'X-MyCoolApp-Key')
         do_test_authentication('X-MyCoolApp-Key')
-        settings.APIKEY_AUTHORIZATION_HEADER = original
-
+        setattr(settings, 'APIKEY_AUTHORIZATION_HEADER', original)
+        key.settings.reload()
+        self.assertEquals(key.settings.AUTH_HEADER, original)
+        
     def test_perm_check(self):
         client = Client()
         client.login(username="NonAuthorized", password="NonAuthorizedPassword")

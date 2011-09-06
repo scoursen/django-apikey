@@ -1,13 +1,12 @@
-from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.models import *
 from key.models import ApiKey
-from key.settings import USE_API_GROUP, AUTH_HEADER
+from key import settings
 import logging
 
 class ApiKeyAuthentication(object):
     def is_authenticated(self, request):
-        auth_header = AUTH_HEADER
+        auth_header = getattr(settings, 'AUTH_HEADER')
         auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
         auth_string = request.META.get(auth_header)
         if not auth_string:
@@ -25,8 +24,9 @@ class ApiKeyAuthentication(object):
         return True
         
     def challenge(self):
+        auth_header = getattr(settings, 'AUTH_HEADER')
         resp = HttpResponse('Authorization Required')
         resp['WWW-Authenticate'] = 'KeyBasedAuthentication realm="API"'       
-        resp[AUTH_HEADER] = 'Key Needed'
+        resp[auth_header] = 'Key Needed'
         resp.status_code = 401
         return resp
