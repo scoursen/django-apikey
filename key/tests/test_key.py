@@ -30,7 +30,7 @@ class ApiKeyTest(TestCase):
             self.user.save()
             gr.save()
         else:
-            assign_permissions(self.user)
+            assign_api_key_permissions(self.user)
         k = generate_unique_api_key(self.user)
         self.assertTrue(k is not None)
         self.assertNotEquals(k.key, None)

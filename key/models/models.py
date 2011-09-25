@@ -52,7 +52,7 @@ class ApiKey(models.Model):
     def __unicode__(self):
         return 'ApiKey: %s' % (self.key)
 
-def assign_permissions(user_or_group):
+def assign_api_key_permissions(user_or_group):
     ct = ContentType.objects.get(app_label="key", model="apikey")
     can_gen, pc = Permission.objects.get_or_create(name="Can generate an API key",
                                              codename="can_make_api_key",
@@ -81,5 +81,5 @@ def create_group():
     if USE_API_GROUP:
         gr, cr = Group.objects.get_or_create(name='API User')
         if cr:
-            assign_permissions(gr)
+            assign_api_key_permissions(gr)
         return gr
