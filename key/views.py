@@ -68,6 +68,10 @@ else:
         pass
 
 class KeyCreateView(ProtectedView, CreateView):
+    def get_queryset(self):
+        profile = self.request.user.key_profile
+        return ApiKey.objects.filter(profile=profile)
+    
     def get_success_url(self):
         return reverse('key.list')
 
