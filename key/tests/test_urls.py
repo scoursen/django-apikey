@@ -21,7 +21,7 @@ class KeyViewHandler(BaseHandler):
     def read(self, request, key_pk):
         try:
             return ApiKey.objects.get(profile=request.user.key_profile,
-                                      pk=key_pk)
+                                     pk=key_pk)
         except self.model.DoesNotExist:
             return rc.NOT_FOUND
 

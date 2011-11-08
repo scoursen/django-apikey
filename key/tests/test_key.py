@@ -147,7 +147,9 @@ class ApiKeyTest(TestCase):
         self.assertTrue(client.login(username='ApiKeyTest',
                                      password='ApiKeyTestPassword'))
         u = User.objects.get(username='ApiKeyTest')
+        self.assertTrue(u.check_password('ApiKeyTestPassword'))
         self.assertTrue(u.has_perm('key.can_make_api_key'))
+        self.assertTrue(u.has_perm('key.has_api_key_profile'))
         rv = client.get(reverse('key.list'))
         self.assertEquals(rv.status_code, 200)
         original_list = list(self.user.key_profile.api_keys.all())
