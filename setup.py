@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='django-key',
-      version='0.5.0',
+      version='0.5.1',
       description='Simple, straight forward API key for django-piston.',
       author='Steve Coursen',
       author_email='smcoursen@gmail.com',
