@@ -16,27 +16,6 @@ from django.contrib.auth.models import User
 import hashlib
 import datetime
 import logging
-import decorator
-
-def get_etag_key(request):
-    try:
-        lm = request.user.key_profile.last_access
-    except:
-        lm = datetime.datetime.utcnow()
-    k = 'etag.%s.%s.%s' % (lm, request.path, request.user)
-    k = k.replace(' ', '_')
-    return hashlib.md5(k).hexdigest()
-
-def etag_func(request, *args, **kwargs):
-    etag_key = get_etag_key(request)
-    etag = cache.get(etag_key, None)
-    return etag
-
-def latest_access(request, *args, **kwargs):
-    try:
-        return request.user.key_profile.last_access
-    except:
-        return datetime.datetime.utcnow()
 
 class ProtectedView(object):
     @method_decorator(permission_required('key.has_api_key_profile'))
@@ -47,25 +26,6 @@ class ProtectedView(object):
         context = super(ProtectedView, self).get_context_data(**kwargs)
         context['request'] = self.request
         return context
-
-if 'django.middleware.cache.UpdateCacheMiddleware' in settings.MIDDLEWARE_CLASSES:
-    from django import utils
-    class CachedView(object):
-        @method_decorator(cache_page(1))
-        @method_decorator(condition(etag_func=etag_func, last_modified_func=latest_access))
-        def get(self, request, *args, **kwargs):
-            import rfc822
-            import time            
-            rv = super(CachedView, self).get(request, *args, **kwargs)
-            if not request.user.is_anonymous():
-                utils.cache.patch_cache_control(rv, private=True)
-            etag = get_etag_key(request)
-            if etag:
-                rv['ETag'] = etag
-            return rv
-else:
-    class CachedView(object):
-        pass
 
 class KeyCreateView(ProtectedView, CreateView):
     def get_queryset(self):
@@ -81,7 +41,7 @@ class KeyCreateView(ProtectedView, CreateView):
         return HttpResponseRedirect(self.get_success_url())
     
         
-class KeyListView(CachedView, ProtectedView, ListView):
+class KeyListView(ProtectedView, ListView):
     def get_queryset(self):
         profile = self.request.user.key_profile
         return ApiKey.objects.filter(profile=profile)
