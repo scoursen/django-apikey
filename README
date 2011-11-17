@@ -40,3 +40,10 @@ For example, this will allow a User to make an unlimited number of keys.
 
 You can control the length of the key by setting APIKEY_KEY_SIZE.  Currently, there is a maximum
 key size of 32 characters.
+
+The following signals are generated / used by this package:
+
+api_user_created : generated when a ApiKeyProfile is attached to a User
+api_key_created : generated when a ApiKey is created
+api_user_logged_in : generated when a user connects to REST service with key authentication
+api_user_logged_out : generated when a user explicitly logs out of the REST service
