@@ -8,6 +8,7 @@ import logging
 import time
 import hashlib
 from key.settings import MAX_KEYS, KEY_SIZE, USE_API_GROUP
+from key.signals import api_user_logged_in
 
 class ApiKeyProfile(models.Model):
     user = models.OneToOneField(User, related_name='key_profile')

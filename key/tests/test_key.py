@@ -87,18 +87,20 @@ class ApiKeyTest(TestCase):
         def do_test_authentication(auth_header):
             client = Client()
             def t_user_logged_in(*args, **kwargs):
-                self.user_signalled = True
+                self.user_login_signalled = True
+            def t_user_logged_out(*args, **kwargs):
+                self.user_logout_signalled = True
             auth_header = 'HTTP_%s' % (auth_header.upper().replace('-', '_'))
             key = self.user.key_profile.api_keys.all()[0]
             extra = {auth_header: key.key}
-            self.user_signalled = False
-            user_logged_in.connect(t_user_logged_in, dispatch_uid='t_user_logged_in')
-            
+            self.user_logout_signalled, self.user_login_signalled = False, False
+            api_user_logged_in.connect(t_user_logged_in, dispatch_uid='t_user_logged_in')
+            api_user_logged_out.connect(t_user_logged_out, dispatch_uid='t_user_logged_out')
             rv = client.get(reverse('test_key_list'), **extra)
             self.assertEquals(rv.status_code, 200)
             key.login('127.0.0.1')
             self.assertEquals(key.logged_ip, '127.0.0.1')
-            self.assertTrue(self.user_signalled)
+            self.assertTrue(self.user_login_signalled)
             
             rv = client.get(reverse('test_key_view', args=(key.pk,)))
             self.assertEquals(rv.status_code,401)
@@ -111,6 +113,7 @@ class ApiKeyTest(TestCase):
             self.assertEquals(rv.status_code, 401)
             self.user.key_profile.api_keys.all()[0].logout()
             key.logout()
+            self.assertTrue(self.user_logout_signalled)
             self.assertEquals(key.logged_ip, None)
         import key.settings
         original = getattr(settings, 'APIKEY_AUTHORIZATION_HEADER', 'X-Api-Authorization')

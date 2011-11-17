@@ -50,7 +50,19 @@ def update_profile_timestamps(sender, instance, created, *args, **kwargs):
     instance.profile.save()
 post_save.connect(update_profile_timestamps, sender=ApiKey, dispatch_uid='update_profile_timstamps')
 
+def send_login_logout_signals(sender, instance, created, *args, **kwargs):
+    if instance.logged_ip:
+        api_user_logged_in.send(sender=instance.profile.user.__class__,
+                                user=instance.profile.user)
+    else:
+        api_user_logged_out.send(sender=instance.profile.user.__class__,
+                                 user=instance.profile.user)
+post_save.connect(send_login_logout_signals, sender=ApiKey, dispatch_uid='send_loging_logout_signals')
+
 def create_key_profile(user):
     profile, c = ApiKeyProfile.objects.get_or_create(user=user)
+    if c:
+        api_user_created.send(sender=user.__class__,
+                              instance=user)
     return profile
 

@@ -2,6 +2,7 @@ from django.http import HttpResponse
 from django.core import cache
 from django.contrib.auth.models import *
 from key.models import ApiKey
+from key.signals import api_user_logged_in
 from key import settings
 import logging
 import hashlib
@@ -23,14 +24,11 @@ class ApiKeyAuthentication(object):
                 request.user = user
             else:
                 key = ApiKey.objects.get(key=auth_string)
-                key.login(request.META.get('REMOTE_ADDR'))
                 request.user = key.profile.user
                 cache.get_cache('default').set(_key_cache_key(key.key), request.user)
                 if not key.profile.user.has_perm('key.can_use_api'):
                     return False                
-                user_logged_in.send(sender=request.user.__class__,
-                                    request=request, user=request.user)
-                
+                key.login(request.META.get('REMOTE_ADDR'))
         except ApiKey.DoesNotExist:
             return False
         request.key = auth_string
