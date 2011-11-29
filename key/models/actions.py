@@ -59,7 +59,7 @@ def send_login_logout_signals(sender, instance, created, *args, **kwargs):
                                  user=instance.profile.user)
 post_save.connect(send_login_logout_signals, sender=ApiKey, dispatch_uid='send_loging_logout_signals')
 
-def create_key_profile(user):
+def create_key_profile(user, **kwargs):
     profile, c = ApiKeyProfile.objects.get_or_create(user=user)
     if c:
         api_user_created.send(sender=user.__class__,
