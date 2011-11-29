@@ -54,8 +54,8 @@ You must create ApiKeyProfiles right from your code (as you may want restrict so
 
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
-from key.models.actions import create_key_profile
+from key.models.actions import create_key_profile_signal
 
-post_save.connect(create_key_profile, sender=User)
+post_save.connect(create_key_profile_signal, sender=User)
 
 Whenever you create a new user, it will create a new ApiKeyProfile.
