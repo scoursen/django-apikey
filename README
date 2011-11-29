@@ -1,4 +1,5 @@
 django-apikey
+=============
 
 Simple, straight forward API key authentication for django-piston.
 
@@ -47,3 +48,14 @@ api_user_created : generated when a ApiKeyProfile is attached to a User
 api_key_created : generated when a ApiKey is created
 api_user_logged_in : generated when a user connects to REST service with key authentication
 api_user_logged_out : generated when a user explicitly logs out of the REST service
+
+
+You must create ApiKeyProfiles right from your code (as you may want restrict some users from having access to your API), to do that, you can just add the following code into some of your models.py files:
+
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from key.models.actions import create_key_profile
+
+post_save.connect(create_key_profile, sender=User)
+
+Whenever you create a new user, it will create a new ApiKeyProfile.
