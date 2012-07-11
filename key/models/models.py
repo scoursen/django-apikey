@@ -17,6 +17,10 @@ class ApiKeyProfile(models.Model):
 
     class Meta:
         app_label = 'key'
+        permissions = (
+            ('has_api_key_profile', 'Has an API key profile'),
+            ('can_use_api', 'Can use the API'),
+            )
 
     def available_keys(self):
         if self.max_keys == -1:
@@ -37,10 +41,14 @@ class ApiKey(models.Model):
     logged_ip = models.CharField(max_length=32, blank=True, null=True, default=None)
     last_used = models.DateTimeField(default=datetime.utcnow)
     created = models.DateTimeField(default=datetime.utcnow)
-    
+
     class Meta:
         app_label = 'key'
         ordering = ['-created']
+        permissions = (
+            ('can_make_api_key', 'Can generate an API key'),
+            )
+
 
     def login(self, ip_address):
         self.logged_ip = ip_address
@@ -54,30 +62,17 @@ class ApiKey(models.Model):
         return 'ApiKey: %s' % (self.key)
 
 def assign_api_key_permissions(user_or_group):
-    ct = ContentType.objects.get(app_label="key", model="apikey")
-    can_gen, pc = Permission.objects.get_or_create(name="Can generate an API key",
-                                             codename="can_make_api_key",
-                                             content_type=ct)
-    ct = ContentType.objects.get(app_label='key', model='apikeyprofile')
-    has_prof, pc = Permission.objects.get_or_create(name="Has an API key profile",
-                                             codename="has_api_key_profile",
-                                             content_type=ct)
-    can_login, pc = Permission.objects.get_or_create(name="Can use the API",
-                                                     codename="can_use_api",
-                                                     content_type=ct)
-    perm_list = getattr(user_or_group, 'permissions', 
+    perm_list = getattr(user_or_group, 'permissions',
                         getattr(user_or_group, 'user_permissions'))
-    perm_list.add(can_gen)
-    perm_list.add(has_prof)
-    perm_list.add(can_login)
-    for permission in [ 'add_apikey', 'change_apikey', 'delete_apikey' ]:
-        p = Permission.objects.get(codename=permission)
-        perm_list.add(p)
+    ct = ContentType.objects.get(app_label='key', model='apikeyprofile')
+    hakp, _ = Permission.objects.get_or_create(codename='has_api_key_profile', content_type=ct)
+    cua, _ = Permission.objects.get_or_create(codename='can_use_api', content_type=ct)
+    ct = ContentType.objects.get(app_label='key', model='apikey')
+    cmak, _ = Permission.objects.get_or_create(codename='can_make_api_key', content_type=ct)
     p = Permission.objects.get(codename='change_apikeyprofile')
-    perm_list.add(p)
-    user_or_group.save()
+    perm_list.add(hakp, cua, cmak, p)
     return user_or_group
-    
+
 def create_group():
     if USE_API_GROUP:
         gr, cr = Group.objects.get_or_create(name='API User')
