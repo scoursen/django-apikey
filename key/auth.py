@@ -18,7 +18,10 @@ class ApiKeyAuthentication(object):
         auth_string = request.META.get(auth_header)
         if not auth_string:
             return False
-        key = ApiKey.objects.get(key=auth_string)
+        try:
+            key = ApiKey.objects.get(key=auth_string)
+        except ApiKey.DoesNotExist, e:
+            return False
         request.user = key.profile.user
         if not key.profile.user.has_perm('key.can_use_api'):
             return False
